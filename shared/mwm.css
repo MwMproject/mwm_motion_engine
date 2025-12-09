@@ -1,0 +1,163 @@
+/* ============= MwM PROJECT — GLOBAL STYLE SHEET ============= */
+
+/* VARIABLES */
+:root {
+  --bg: #050608;
+  --bg-alt: #0b0d12;
+  --text: #f7f7f7;
+  --muted: #a0a0a0;
+
+  --accent: #00ff7b;
+  --accent-soft: rgba(0,255,123,0.12);
+  --border: #20232c;
+  --glow: rgba(0,255,123,0.45);
+}
+
+
+/* RESET */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 50% 0%, var(--bg-alt), var(--bg) 80%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+
+/* ============= REEL PLAYER (1080x1920 layout) ============= */
+.reel {
+  width: 1080px;
+  height: 1920px;
+  border-radius: 32px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.30);
+
+  box-shadow:
+    0 0 50px rgba(0,0,0,0.6),
+    0 0 80px var(--glow);
+
+  overflow: visible;
+  position: relative;
+}
+
+
+/* ============= SLIDE ENGINE — FINAL VERSION (V2) ============= */
+.slide {
+  position: absolute;
+  inset: 0;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(.94);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition:
+    opacity 1.2s cubic-bezier(.11,.62,.41,.99),
+    visibility 1.2s cubic-bezier(.11,.62,.41,.99),
+    transform 1.2s cubic-bezier(.11,.62,.41,.99);
+}
+
+.slide.active {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.slide.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: scale(.94);
+}
+
+
+/* ============= INTRO & OUTRO ============= */
+
+.intro-wrapper,
+.outro-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+/* INTRO LOGO ANIMATION */
+.intro-logo {
+  width: 600px;
+  opacity: 0;
+  transform: scale(0.4) rotate(-180deg);
+  filter: drop-shadow(0 0 40px var(--glow));
+
+  animation: introLogo 2.2s cubic-bezier(.16,.77,.36,1) forwards;
+}
+
+@keyframes introLogo {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-180deg); }
+  40%  { opacity: 1; transform: scale(1.12) rotate(0deg); }
+  70%  { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* INTRO TITLE */
+.intro-title {
+  font-size: 85px;
+  color: var(--accent);
+  text-shadow: 0 0 42px var(--glow);
+  opacity: 0;
+
+  transform: translateY(20px);
+  animation: introTitle 1.4s ease-out forwards;
+  animation-delay: 1.2s;
+}
+
+@keyframes introTitle {
+  0%   { opacity: 0; transform: translateY(20px); }
+  60%  { opacity: 1; transform: translateY(0) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* OUTRO */
+.outro-logo {
+  width: 600px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 40px var(--glow));
+  animation: outroSpin 6s ease-in-out infinite;
+}
+
+@keyframes outroSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  40%  { transform: rotate(360deg) scale(1.08); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+.outro-text {
+  font-size: 85px;
+  color: var(--accent);
+  text-shadow: 0 0 42px var(--glow);
+  opacity: 0.8;
+}
+
+
+/* ============= PARTICLES BACKGROUND ============= */
+#particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}

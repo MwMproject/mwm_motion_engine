@@ -1,0 +1,39 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Output folders
+output/
+
+# Renderer temporary frames
+renderer/frames_tmp/
+renderer/*.mp4
+renderer/*.webm
+renderer/videos/
+
+# Cache & temp
+*.tmp
+*.temp
+*.cache
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# OS system files
+ehthumbs.db
+desktop.ini
+
+# VSCode settings
+.vscode/
+
+# Puppeteer Chromium Downloads
+.puppeteer/
+
+# Environment files
+.env
+.env.local
+.env.*.local
