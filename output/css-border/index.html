@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, initial-scale=1.0">
+  <title>CSS Border Style</title>
+
+  <link rel="stylesheet" href="./mwm.css">
+  <link rel="stylesheet" href="./demo.css">
+</head>
+<body>
+
+  <canvas id="particles"></canvas>
+
+  <div class="reel">
+
+    <!-- INTRO -->
+    <section class="slide active" id="intro">
+      <div class="slide-inner">
+<div class="intro-wrapper">
+  <img src="./logo_mwm.png" class="intro-logo" alt="MwM Logo">
+  <h2 class="intro-demo-name">CSS Border Style</h2>
+</div>
+
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section class="slide" id="css-border-demo">
+<div class="demo-wrapper">
+
+  <h1 class="demo-title">CSS Border Style</h1>
+
+  <div class="demo-box main-box"></div>
+
+  <pre class="demo-code">
+.border-style {
+  border: 6px solid #00ff7b;
+}
+  </pre>
+
+</div>
+
+    </section>
+
+    <!-- OUTRO -->
+    <section class="slide" id="outro">
+      <div class="slide-inner">
+<div class="outro-wrapper">
+  <img src="./logo_mwm.png" class="outro-logo" alt="MwM Logo">
+  <h2 class="outro-text">Thanks for watching</h2>
+</div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./mwm_particules.js"></script>
+  <script src="./demo.js"></script>
+
+  <script>
+    // ============================================================
+    // Slide Engine V2
+    // ============================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      const slides = ["intro", "css-border-demo", "outro"];
+      const timings = [3000, 20000, 3000]; // intro / demo / outro durations
+      let current = 0;
+
+      function showSlide(i) {
+        document.querySelectorAll(".slide").forEach(s => {
+          s.classList.remove("active");
+          s.classList.add("hidden");
+        });
+
+        const id = slides[i];
+        const el = document.getElementById(id);
+
+        el.classList.remove("hidden");
+        el.classList.add("active");
+
+        if (id === "css-border-demo" && typeof startDemo === "function") {
+          startDemo();
+        }
+      }
+
+      showSlide(0);
+
+      function next() {
+        current++;
+        if (current >= slides.length) return;
+        showSlide(current);
+        setTimeout(next, timings[current]);
+      }
+
+      setTimeout(next, timings[0]);
+    });
+  </script>
+
+</body>
+</html>
