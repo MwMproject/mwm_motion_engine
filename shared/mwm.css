@@ -1,18 +1,17 @@
-/* ============= MwM PROJECT — GLOBAL STYLE SHEET ============= */
+/* ============================================================
+   MWMPROJECT — GLOBAL STYLES
+   ============================================================ */
 
-/* VARIABLES */
 :root {
   --bg: #050608;
   --bg-alt: #0b0d12;
   --text: #f7f7f7;
   --muted: #a0a0a0;
-
   --accent: #00ff7b;
   --accent-soft: rgba(0,255,123,0.12);
   --border: #20232c;
   --glow: rgba(0,255,123,0.45);
 }
-
 
 /* RESET */
 *,
@@ -24,6 +23,7 @@
 }
 
 body {
+  margin: 0;
   font-family: "Inter", sans-serif;
   color: var(--text);
   background: radial-gradient(circle at 50% 0%, var(--bg-alt), var(--bg) 80%);
@@ -34,37 +34,29 @@ body {
   overflow: hidden;
 }
 
+/* ============== REEL ============== */
 
-/* ============= REEL PLAYER (1080x1920 layout) ============= */
 .reel {
   width: 1080px;
   height: 1920px;
   border-radius: 32px;
   border: 1px solid var(--border);
   background: rgba(0,0,0,0.30);
-
   box-shadow:
     0 0 50px rgba(0,0,0,0.6),
     0 0 80px var(--glow);
-
-  overflow: visible;
   position: relative;
+  overflow: hidden;
 }
 
+/* ============== SLIDES SYSTEM ============== */
 
-/* ============= SLIDE ENGINE — FINAL VERSION (V2) ============= */
 .slide {
   position: absolute;
   inset: 0;
-
   opacity: 0;
   visibility: hidden;
   transform: scale(.94);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
   transition:
     opacity 1.2s cubic-bezier(.11,.62,.41,.99),
     visibility 1.2s cubic-bezier(.11,.62,.41,.99),
@@ -83,24 +75,21 @@ body {
   transform: scale(.94);
 }
 
+/* ============== INTRO ============== */
 
-/* ============= INTRO & OUTRO ============= */
-
-.intro-wrapper,
-.outro-wrapper {
+.intro-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 32px;
 }
 
-/* INTRO LOGO ANIMATION */
+/* Logo */
 .intro-logo {
   width: 600px;
   opacity: 0;
   transform: scale(0.4) rotate(-180deg);
   filter: drop-shadow(0 0 40px var(--glow));
-
   animation: introLogo 2.2s cubic-bezier(.16,.77,.36,1) forwards;
 }
 
@@ -108,16 +97,14 @@ body {
   0%   { opacity: 0; transform: scale(0.4) rotate(-180deg); }
   40%  { opacity: 1; transform: scale(1.12) rotate(0deg); }
   70%  { transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-/* INTRO TITLE */
 .intro-title {
   font-size: 85px;
   color: var(--accent);
   text-shadow: 0 0 42px var(--glow);
   opacity: 0;
-
   transform: translateY(20px);
   animation: introTitle 1.4s ease-out forwards;
   animation-delay: 1.2s;
@@ -129,12 +116,36 @@ body {
   100% { transform: translateY(0) scale(1); }
 }
 
-/* OUTRO */
+/* Injected by generator */
+.intro-demo-name {
+  font-size: 48px;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(15px);
+  text-shadow: 0 0 20px rgba(0,255,123,0.25);
+  animation: introDemoName 1.2s ease-out forwards;
+  animation-delay: 1.6s;
+}
+
+@keyframes introDemoName {
+  0%   { opacity: 0; transform: translateY(15px); }
+  100% { opacity: .85; transform: translateY(0); }
+}
+
+/* ============== OUTRO ============== */
+
+.outro-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
 .outro-logo {
   width: 600px;
   opacity: 0.85;
-  filter: drop-shadow(0 0 40px var(--glow));
   animation: outroSpin 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 40px var(--glow));
 }
 
 @keyframes outroSpin {
@@ -150,12 +161,25 @@ body {
   opacity: 0.8;
 }
 
+/* Injected by generator */
+.outro-demo-name {
+  font-size: 44px;
+  opacity: .8;
+  color: var(--muted);
+  margin-top: 20px;
+  text-shadow: 0 0 20px rgba(0,255,123,0.25);
+  animation: outroDemoName 1.2s ease-out forwards;
+}
 
-/* ============= PARTICLES BACKGROUND ============= */
+@keyframes outroDemoName {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: .85; transform: translateY(0); }
+}
+
+/* ============== PARTICLES BACKGROUND ============== */
 #particles {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
