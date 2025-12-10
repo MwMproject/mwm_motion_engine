@@ -94,11 +94,6 @@ introHTML = introHTML.replace(
   `  <h2 class="intro-demo-name">${pageTitle}</h2>\n</div>`
 );
 
-outroHTML = outroHTML.replace(
-  "</div>",
-  `  <h3 class="outro-demo-name">${pageTitle}</h3>\n</div>`
-);
-
 /* ------------------------------------------------------------
    COPY SHARED ASSETS
 ------------------------------------------------------------ */
