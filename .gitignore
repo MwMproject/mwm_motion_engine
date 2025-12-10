@@ -4,13 +4,13 @@ npm-debug.log
 yarn-error.log
 
 # Output folders
-
+output
 
 # Renderer temporary frames
 renderer/frames_tmp/
 renderer/*.mp4
 renderer/*.webm
-renderer/videos/
+
 
 # Cache & temp
 *.tmp

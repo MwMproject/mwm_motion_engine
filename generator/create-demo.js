@@ -1,10 +1,7 @@
 /**
  * ============================================================
- * MwM PROJECT — DEMO GENERATOR (FINAL VERSION)
- * Generates:
- *  - intro + template + outro merged in index.html
- *  - copies shared assets
- *  - cleans old output folder automatically
+ * MwM PROJECT — DEMO GENERATOR
+ * Generates: intro → demo → outro + full HTML wrapper
  * ============================================================
  */
 
@@ -12,9 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 /* ------------------------------------------------------------
-   Helpers
+   HELPERS
 ------------------------------------------------------------ */
-
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
@@ -37,24 +33,20 @@ function copyFolder(src, dest) {
 /* ------------------------------------------------------------
    INPUTS
 ------------------------------------------------------------ */
-
 const demoName = process.argv[2];
 const pageTitle = process.argv[3] || "MwM Demo";
 
 if (!demoName) {
-  console.log(
-    '❌ Usage: node generator/create-demo.js <templateName> "Page Title"'
-  );
+  console.log('❌ Usage: node generator/create-demo.js <templateName> "Title"');
   process.exit(1);
 }
 
 const safeDemoName = demoName.toLowerCase().replace(/\s+/g, "-");
-const outDir = path.join("output", safeDemoName);
+const outputDir = path.join("output", safeDemoName);
 
 /* ------------------------------------------------------------
    TEMPLATE PATHS
 ------------------------------------------------------------ */
-
 const TEMPLATE_DIR = path.join("templates", safeDemoName);
 const BASE_DIR = path.join("templates", "base");
 
@@ -65,56 +57,59 @@ if (!fs.existsSync(TEMPLATE_DIR)) {
 
 ["demo.html", "demo.css", "demo.js"].forEach((file) => {
   if (!fs.existsSync(path.join(TEMPLATE_DIR, file))) {
-    console.log(`❌ Missing required file: ${file}`);
+    console.log(`❌ Missing required template file: ${file}`);
     process.exit(1);
   }
 });
 
 /* ------------------------------------------------------------
-   CLEAN OLD OUTPUT
+   CLEAN OLD VERSION
 ------------------------------------------------------------ */
-
-if (fs.existsSync(outDir)) {
-  fs.rmSync(outDir, { recursive: true, force: true });
+if (fs.existsSync(outputDir)) {
+  console.log("🧹 Removing previous version…");
+  fs.rmSync(outputDir, { recursive: true, force: true });
 }
-
-ensureDir(outDir);
+ensureDir(outputDir);
 
 /* ------------------------------------------------------------
-   LOAD BASE HTML (Intro / Outro)
+   LOAD TEMPLATE CONTENT
 ------------------------------------------------------------ */
-
 let introHTML = fs.readFileSync(path.join(BASE_DIR, "intro.html"), "utf8");
 let outroHTML = fs.readFileSync(path.join(BASE_DIR, "outro.html"), "utf8");
 const demoHTML = fs.readFileSync(path.join(TEMPLATE_DIR, "demo.html"), "utf8");
 
-/* Inject template title */
+/* Inject dynamic titles */
 introHTML = introHTML.replace(
   "</div>",
   `  <h2 class="intro-demo-name">${pageTitle}</h2>\n</div>`
 );
 
+outroHTML = outroHTML.replace(
+  "</div>",
+  `  <h3 class="outro-demo-name">${pageTitle}</h3>\n</div>`
+);
+
 /* ------------------------------------------------------------
    COPY SHARED ASSETS
 ------------------------------------------------------------ */
-
-copyFile("shared/mwm.css", path.join(outDir, "mwm.css"));
-copyFile("shared/mwm_particules.js", path.join(outDir, "mwm_particules.js"));
-copyFile("shared/logo_mwm.png", path.join(outDir, "logo_mwm.png"));
-
-/* ------------------------------------------------------------
-   COPY TEMPLATE FILES (CSS / JS)
------------------------------------------------------------- */
-
-copyFile(path.join(TEMPLATE_DIR, "demo.css"), path.join(outDir, "demo.css"));
-copyFile(path.join(TEMPLATE_DIR, "demo.js"), path.join(outDir, "demo.js"));
+copyFile("shared/mwm.css", path.join(outputDir, "mwm.css"));
+copyFile("shared/mwm_particules.js", path.join(outputDir, "mwm_particules.js"));
+copyFile("shared/logo_mwm.png", path.join(outputDir, "logo_mwm.png"));
 
 /* ------------------------------------------------------------
-   BUILD FINAL HTML PAGE
+   COPY TEMPLATE FILES (CSS + JS)
 ------------------------------------------------------------ */
+copyFile(path.join(TEMPLATE_DIR, "demo.css"), path.join(outputDir, "demo.css"));
 
-const finalHTML = `<!DOCTYPE html>
+copyFile(path.join(TEMPLATE_DIR, "demo.js"), path.join(outputDir, "demo.js"));
+
+/* ------------------------------------------------------------
+   GENERATE FINAL INDEX.HTML
+------------------------------------------------------------ */
+const finalHTML = `
+<!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1080, initial-scale=1.0">
@@ -123,6 +118,7 @@ const finalHTML = `<!DOCTYPE html>
   <link rel="stylesheet" href="./mwm.css">
   <link rel="stylesheet" href="./demo.css">
 </head>
+
 <body>
 
   <canvas id="particles"></canvas>
@@ -153,13 +149,11 @@ ${outroHTML}
   <script src="./mwm_particules.js"></script>
   <script src="./demo.js"></script>
 
+  <!-- DEMO ENGINE V2 -->
   <script>
-    // ============================================================
-    // Slide Engine V2
-    // ============================================================
     document.addEventListener("DOMContentLoaded", () => {
       const slides = ["intro", "${safeDemoName}-demo", "outro"];
-      const timings = [3000, 20000, 3000]; // intro / demo / outro durations
+      const timings = [3000, 20000, 3000];
       let current = 0;
 
       function showSlide(i) {
@@ -193,14 +187,11 @@ ${outroHTML}
   </script>
 
 </body>
-</html>`;
+</html>
+`;
 
-/* ------------------------------------------------------------
-   WRITE OUTPUT
------------------------------------------------------------- */
+fs.writeFileSync(path.join(outputDir, "index.html"), finalHTML, "utf8");
 
-fs.writeFileSync(path.join(outDir, "index.html"), finalHTML, "utf8");
-
-console.log("✔ Demo generated →", outDir);
-console.log("✔ Injected intro/outro titles:", pageTitle);
-console.log("✨ Ready for rendering!");
+console.log("✔ Demo generated:", outputDir);
+console.log("✔ Injected titles:", pageTitle);
+console.log("✨ Ready to render!");

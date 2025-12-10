@@ -1,86 +1,69 @@
 /**
  * ============================================================
- * MwM Motion Engine — VIDEO RENDERER
- * Puppeteer → PNG Frames → FFmpeg MP4 1080x1920
- *
- * Stable timing:
- *   intro: 3s
- *   demo:  22s
- *   outro: 3s
- *
- * Usage:
- *   node renderer/render-video.js ./output/css-border-demo/index.html
- *
- * Output:
- *   renderer/videos/<demoName>_YYYYMMDD-HHMMSS.mp4
+ * MwM PROJECT — VIDEO RENDERER
+ * Puppeteer → PNG Frames → FFmpeg → MP4 1080x1920 @ 60 FPS
  * ============================================================
  */
+
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-// ---------- SETTINGS (modifiable) ----------
-const FPS = 60; // 60 = ultra smooth
-const DUR_INTRO = 3; // seconds
-const DUR_DEMO = 22;
-const DUR_OUTRO = 3;
+/* ------------------------------------------------------------
+   SETTINGS
+------------------------------------------------------------ */
+const FPS = 60; // Fluidité parfaite
+const INTRO_TIME = 3; // secondes
+const DEMO_TIME = 20; // secondes
+const OUTRO_TIME = 3; // secondes
 
-// ---------- UTILITIES ----------
-function wait(ms) {
-  return new Promise((res) => setTimeout(res, ms));
+const TOTAL_DURATION = INTRO_TIME + DEMO_TIME + OUTRO_TIME; // secondes
+const TOTAL_FRAMES = TOTAL_DURATION * FPS;
+
+/* ------------------------------------------------------------
+   INPUTS
+------------------------------------------------------------ */
+const inputHTML = process.argv[2];
+
+if (!inputHTML) {
+  console.log("❌ Usage: node render-video.js <path/to/index.html>");
+  process.exit(1);
 }
 
-function timestamp() {
-  const d = new Date();
-  return (
-    d.getFullYear().toString() +
-    String(d.getMonth() + 1).padStart(2, "0") +
-    String(d.getDate()).padStart(2, "0") +
-    "-" +
-    String(d.getHours()).padStart(2, "0") +
-    String(d.getMinutes()).padStart(2, "0") +
-    String(d.getSeconds()).padStart(2, "0")
-  );
-}
+// Nom automatique basé sur le dossier de démo
+const demoFolder = path.basename(path.dirname(inputHTML));
+const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+const outputMP4 = path.join(
+  __dirname,
+  "videos",
+  `${demoFolder}_${timestamp}.mp4`
+);
 
-function extractDemoName(htmlPath) {
-  const parts = htmlPath.split(path.sep);
-  const folder = parts[parts.length - 2];
-  return folder.replace(/[^a-z0-9\-]/gi, "");
-}
+/* ------------------------------------------------------------
+   DIRECTORIES
+------------------------------------------------------------ */
+const FRAMES_DIR = path.join(__dirname, "frames_temp");
+const OUTPUT_DIR = path.join(__dirname, "videos");
 
-// ---------- MAIN FUNCTION ----------
-async function renderVideo(inputHTML) {
-  if (!inputHTML || !fs.existsSync(inputHTML)) {
-    console.error("❌ HTML introuvable :", inputHTML);
-    process.exit(1);
-  }
+// Create folders if missing
+if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+if (!fs.existsSync(FRAMES_DIR)) fs.mkdirSync(FRAMES_DIR, { recursive: true });
 
-  // ---------- Extract demo name for output file ----------
-  const demoName = extractDemoName(inputHTML);
-  const outputDir = path.join(__dirname, "videos");
-  const framesDir = path.join(__dirname, "frames_temp");
+/* ------------------------------------------------------------
+   MAIN RENDER FUNCTION
+------------------------------------------------------------ */
+async function render() {
+  console.log("─────────────────────────────────────────────");
+  console.log("🎬 MwM VIDEO RENDERER V3");
+  console.log("─────────────────────────────────────────────");
+  console.log("📄 HTML:", inputHTML);
+  console.log("🎞 Output:", outputMP4);
+  console.log(`⏱ Duration: ${TOTAL_DURATION}s  •  FPS: ${FPS}`);
+  console.log(`🎥 Total frames: ${TOTAL_FRAMES}`);
+  console.log("─────────────────────────────────────────────\n");
 
-  const videoName = `${demoName}_${timestamp()}.mp4`;
-  const videoPath = path.join(outputDir, videoName);
-
-  // ---------- Prepare folders ----------
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
-  if (!fs.existsSync(framesDir)) fs.mkdirSync(framesDir);
-
-  console.log("──────────────────────────────────────────");
-  console.log("🎬 MwM VIDEO RENDERER V2");
-  console.log("──────────────────────────────────────────");
-  console.log("📄 Input HTML :", inputHTML);
-  console.log("🎞 Output MP4 :", videoPath);
-  console.log(`🎥 FPS = ${FPS}`);
-  console.log("──────────────────────────────────────────");
-
-  // ---------- Total frames ----------
-  const totalFrames = (DUR_INTRO + DUR_DEMO + DUR_OUTRO) * FPS;
-
-  // ---------- Launch browser ----------
+  // Launch Puppeteer
   const browser = await puppeteer.launch({
     headless: true,
     defaultViewport: { width: 1080, height: 1920 },
@@ -89,45 +72,57 @@ async function renderVideo(inputHTML) {
   const page = await browser.newPage();
   await page.goto("file://" + path.resolve(inputHTML));
 
-  console.log(`📸 Capturing ${totalFrames} frames...`);
+  /* ------------------------------------------------------------
+     FORCE l'Engine Demo à jouer à vitesse réelle.
+     Important : Puppeteer ne doit JAMAIS sauter d'intervals.
+------------------------------------------------------------ */
+  await page.evaluate(() => {
+    window.__FORCE_RENDER_MODE = true;
+  });
 
-  // ---------- CAPTURE LOOP ----------
-  for (let i = 0; i < totalFrames; i++) {
-    const num = String(i).padStart(5, "0");
-    const file = path.join(framesDir, `frame_${num}.png`);
+  /* ------------------------------------------------------------
+     CAPTURE LOUP
+------------------------------------------------------------ */
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    const filename = path.join(
+      FRAMES_DIR,
+      `frame_${String(i).padStart(5, "0")}.png`
+    );
+    await page.screenshot({ path: filename, type: "png" });
 
-    await page.screenshot({ path: file });
-    await wait(1000 / FPS);
+    // IMPORTANT pour la vitesse réelle :
+    // Puppeteer doit patienter exactement 1 frame.
+    await new Promise((res) => setTimeout(res, 1000 / FPS));
 
-    process.stdout.write(`📸 Frame ${i + 1}/${totalFrames}\r`);
+    process.stdout.write(`📸 Frame ${i + 1}/${TOTAL_FRAMES}\r`);
   }
 
   await browser.close();
-  console.log("\n📦 Frames captured. Encoding video...");
+  console.log("\n✔ Frames OK — Encoding with FFmpeg…\n");
 
-  // FFmpeg command
-  const ffmpegCmd = `"ffmpeg" -y -framerate ${FPS} -i "${framesDir}/frame_%05d.png" -vf "format=yuv420p" "${videoPath}"`;
+  /* ------------------------------------------------------------
+     FFMPEG — encode MP4
+------------------------------------------------------------ */
+  const ffmpegCmd = `
+    ffmpeg -y -framerate ${FPS} -i "${FRAMES_DIR}/frame_%05d.png" \
+    -c:v libx264 -pix_fmt yuv420p -crf 18 \
+    "${outputMP4}"
+  `;
 
   try {
     execSync(ffmpegCmd, { stdio: "inherit" });
   } catch (err) {
-    console.error("❌ FFmpeg error:", err);
-    return;
+    console.log("❌ FFmpeg ERROR");
+    console.log(err);
   }
 
-  console.log("\n🎉 VIDEO SAVED →", videoPath);
+  /* ------------------------------------------------------------
+     CLEAN TEMPORARY FRAMES
+------------------------------------------------------------ */
+  fs.rmSync(FRAMES_DIR, { recursive: true, force: true });
+  console.log("\n🧹 Temp frames deleted.");
 
-  // Clean frames
-  fs.rmSync(framesDir, { recursive: true, force: true });
-  console.log("🧹 Temporary frames cleaned.");
+  console.log("\n🎉 VIDEO READY →", outputMP4);
 }
 
-// ---------- CLI ----------
-const inputHTML = process.argv[2];
-
-if (!inputHTML) {
-  console.log("❌ Usage: node renderer/render-video.js <path/to/index.html>");
-  process.exit(1);
-}
-
-renderVideo(inputHTML);
+render();
