@@ -1,0 +1,97 @@
+/* ============================================================
+   BORDER STYLE — PRO LAYOUT (Centered & Balanced)
+   ============================================================ */
+
+.border-pro-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* ⬅ Centre verticalement */
+  gap: 70px;               /* Plus d’espace = plus lisible */
+  height: 100%;            /* Utilise toute la slide */
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+/* Title */
+.border-title {
+  font-size: 82px;
+  color: var(--accent);
+  text-shadow: 0 0 42px var(--glow);
+  letter-spacing: 2px;
+}
+
+/* Demo box (bigger & centered) */
+.border-pro-box {
+  width: 780px;     /* Plus large */
+  height: 380px;    /* Plus haut */
+  border-radius: 26px;
+
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(14px);
+
+  box-shadow:
+    inset 0 0 25px rgba(255,255,255,0.06),
+    0 0 55px var(--glow),
+    0 0 90px rgba(0,255,123,0.22);
+
+  transition: border 0.8s ease, transform 0.8s ease;
+  position: relative;
+}
+
+/* Sweep light */
+.border-pro-box::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -180%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(0,255,123,0.35) 50%,
+    transparent 100%
+  );
+  filter: blur(18px);
+  opacity: 0;
+  transform: skewX(-25deg);
+}
+
+.border-pro-box.sweep::after {
+  animation: glossySweep 1.1s ease-out forwards;
+}
+
+@keyframes glossySweep {
+  0% { left: -180%; opacity: 0; }
+  20% { opacity: 0.85; }
+  100% { left: 180%; opacity: 0; }
+}
+
+/* Code section */
+.border-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.border-label {
+  font-size: 58px;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--glow);
+}
+
+/* Enlarged code box */
+.border-code {
+  width: 820px;      /* Larger */
+  padding: 22px 32px;
+  font-size: 38px;
+
+  background: rgba(0,0,0,0.75);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+
+  box-shadow: 0 0 26px rgba(0,255,123,0.22);
+  color: var(--accent);
+}

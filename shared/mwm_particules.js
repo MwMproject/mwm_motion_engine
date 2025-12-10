@@ -1,4 +1,6 @@
-/* MwM PROJECT — SLOW NEBULA FOG */
+// ============================================================
+// MwM — CYBER PARTICLES v2 (Vertical Energy Stream)
+// ============================================================
 
 const canvas = document.getElementById("particles");
 if (canvas) {
@@ -11,85 +13,50 @@ if (canvas) {
   resize();
   window.addEventListener("resize", resize);
 
-  /* NEBULA FOG CONFIGURATION */
+  const COUNT = 70;
+  const particles = [];
 
-  const fogLayers = [
-    {
-      color: "rgba(0, 255, 123, 0.05)",
-      scale: 1.4,
-      speedX: 0.006,
-      speedY: 0.004,
-      offsetX: Math.random() * 1000,
-      offsetY: Math.random() * 1000,
-    },
-    {
-      color: "rgba(0, 255, 123, 0.035)",
-      scale: 1.7,
-      speedX: -0.004,
-      speedY: 0.005,
-      offsetX: Math.random() * 1000,
-      offsetY: Math.random() * 1000,
-    },
-    {
-      color: "rgba(0, 255, 123, 0.025)",
-      scale: 2.2,
-      speedX: 0.002,
-      speedY: -0.003,
-      offsetX: Math.random() * 1000,
-      offsetY: Math.random() * 1000,
-    },
-  ];
-
-  /* GENERATE A NOISE TEXTURE */
-
-  function generateNoiseTexture(size = 512) {
-    const noiseCanvas = document.createElement("canvas");
-    noiseCanvas.width = noiseCanvas.height = size;
-    const nctx = noiseCanvas.getContext("2d");
-
-    const imageData = nctx.createImageData(size, size);
-    const d = imageData.data;
-
-    for (let i = 0; i < d.length; i += 4) {
-      const v = Math.random() * 255; // white noise
-      d[i] = d[i + 1] = d[i + 2] = v;
-      d[i + 3] = 255;
-    }
-
-    nctx.putImageData(imageData, 0, 0);
-    return noiseCanvas;
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      speed: 0.6 + Math.random() * 1.2,
+      length: 10 + Math.random() * 18,
+      alpha: 0.15 + Math.random() * 0.3,
+      pulse: Math.random() * Math.PI * 2,
+    });
   }
 
-  const noiseTexture = generateNoiseTexture();
-
-  /* RENDER LOOP */
-
-  function render() {
+  function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    fogLayers.forEach((fog) => {
-      fog.offsetX += fog.speedX;
-      fog.offsetY += fog.speedY;
+    particles.forEach((p) => {
+      p.y -= p.speed;
 
-      const w = canvas.width * fog.scale;
-      const h = canvas.height * fog.scale;
+      if (p.y < -20) {
+        p.y = canvas.height + 20;
+        p.x = Math.random() * canvas.width;
+      }
 
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = "lighter";
+      // pulsation (respiration laser)
+      p.pulse += 0.05;
+      const glow = p.alpha + Math.sin(p.pulse) * 0.1;
 
-      ctx.filter = "blur(120px)";
+      // vertical cyber line
+      const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.length);
+      gradient.addColorStop(0, `rgba(0,255,123,${glow})`);
+      gradient.addColorStop(1, `rgba(0,255,123,0)`);
 
-      ctx.drawImage(noiseTexture, fog.offsetX, fog.offsetY, w, h);
-
-      ctx.fillStyle = fog.color;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.filter = "none";
-      ctx.globalCompositeOperation = "source-over";
+      ctx.beginPath();
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 2;
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x, p.y + p.length);
+      ctx.stroke();
     });
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(draw);
   }
 
-  render();
+  draw();
 }

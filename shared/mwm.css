@@ -1,15 +1,15 @@
 /* ============================================================
-   MWMPROJECT — GLOBAL STYLES
+   MwM — Global UI Styles (Black + Green Energy Theme)
    ============================================================ */
 
 :root {
-  --bg: #050608;
-  --bg-alt: #0b0d12;
-  --text: #f7f7f7;
-  --muted: #a0a0a0;
+  --bg: #000000;
+  --bg-alt: #050505;
+  --text: #f4f4f4;
+  --muted: #999;
   --accent: #00ff7b;
-  --accent-soft: rgba(0,255,123,0.12);
-  --border: #20232c;
+  --accent-soft: rgba(0,255,123,0.15);
+  --border: rgba(255,255,255,0.1);
   --glow: rgba(0,255,123,0.45);
 }
 
@@ -26,30 +26,38 @@ body {
   margin: 0;
   font-family: "Inter", sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at 50% 0%, var(--bg-alt), var(--bg) 80%);
+  background: var(--bg);
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  overflow: hidden;
+  height: 100vh;
 }
 
-/* ============== REEL ============== */
-
+/* ============================================================
+   Reel (1080x1920)
+   ============================================================ */
 .reel {
   width: 1080px;
   height: 1920px;
-  border-radius: 32px;
-  border: 1px solid var(--border);
-  background: rgba(0,0,0,0.30);
-  box-shadow:
-    0 0 50px rgba(0,0,0,0.6),
-    0 0 80px var(--glow);
   position: relative;
+  border-radius: 32px;
+
+  background: transparent;   /* ⬅ Fix : plus aucun fond blanc/gris */
+  backdrop-filter: blur(12px);
+
+  border: 2px solid rgba(0,255,123,0.15);
+
+  box-shadow:
+    0 0 60px rgba(0,255,123,0.25),
+    inset 0 0 40px rgba(0,255,123,0.15);
+
   overflow: hidden;
 }
 
-/* ============== SLIDES SYSTEM ============== */
+/* ============================================================
+   Slide system
+   ============================================================ */
 
 .slide {
   position: absolute;
@@ -58,9 +66,9 @@ body {
   visibility: hidden;
   transform: scale(.94);
   transition:
-    opacity 1.2s cubic-bezier(.11,.62,.41,.99),
-    visibility 1.2s cubic-bezier(.11,.62,.41,.99),
-    transform 1.2s cubic-bezier(.11,.62,.41,.99);
+    opacity 1s cubic-bezier(.11,.62,.41,.99),
+    visibility 1s cubic-bezier(.11,.62,.41,.99),
+    transform 1s cubic-bezier(.11,.62,.41,.99);
 }
 
 .slide.active {
@@ -72,116 +80,71 @@ body {
 .slide.hidden {
   opacity: 0 !important;
   visibility: hidden !important;
-  transform: scale(.94);
 }
 
-/* ============== INTRO ============== */
+/* ============================================================
+   Intro / Outro
+   ============================================================ */
 
-.intro-wrapper {
+.intro-wrapper,
+.outro-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 32px;
+  gap: 28px;
 }
 
-/* Logo */
+/* Logo intro */
 .intro-logo {
-  width: 600px;
+  width: 540px;
   opacity: 0;
   transform: scale(0.4) rotate(-180deg);
   filter: drop-shadow(0 0 40px var(--glow));
-  animation: introLogo 2.2s cubic-bezier(.16,.77,.36,1) forwards;
+  animation: introLogo 2s ease-out forwards;
 }
 
 @keyframes introLogo {
-  0%   { opacity: 0; transform: scale(0.4) rotate(-180deg); }
-  40%  { opacity: 1; transform: scale(1.12) rotate(0deg); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1); opacity: 1; }
+  0%   { opacity: 0; transform: scale(.4) rotate(-180deg); }
+  50%  { opacity: 1; transform: scale(1.12) rotate(0deg); }
+  100% { transform: scale(1); }
 }
 
 .intro-title {
   font-size: 85px;
   color: var(--accent);
-  text-shadow: 0 0 42px var(--glow);
-  opacity: 0;
-  transform: translateY(20px);
-  animation: introTitle 1.4s ease-out forwards;
-  animation-delay: 1.2s;
+  text-shadow: 0 0 45px var(--glow);
 }
 
-@keyframes introTitle {
-  0%   { opacity: 0; transform: translateY(20px); }
-  60%  { opacity: 1; transform: translateY(0) scale(1.05); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-/* Injected by generator */
-.intro-demo-name {
-  font-size: 48px;
-  color: var(--muted);
-  opacity: 0;
-  transform: translateY(15px);
-  text-shadow: 0 0 20px rgba(0,255,123,0.25);
-  animation: introDemoName 1.2s ease-out forwards;
-  animation-delay: 1.6s;
-}
-
-@keyframes introDemoName {
-  0%   { opacity: 0; transform: translateY(15px); }
-  100% { opacity: .85; transform: translateY(0); }
-}
-
-/* ============== OUTRO ============== */
-
-.outro-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 32px;
-}
-
+/* Outro */
 .outro-logo {
-  width: 600px;
-  opacity: 0.85;
+  width: 520px;
+  opacity: 0.8;
   animation: outroSpin 6s ease-in-out infinite;
-  filter: drop-shadow(0 0 40px var(--glow));
+  filter: drop-shadow(0 0 35px var(--glow));
 }
 
 @keyframes outroSpin {
   0%   { transform: rotate(0deg) scale(1); }
-  40%  { transform: rotate(360deg) scale(1.08); }
+  50%  { transform: rotate(360deg) scale(1.05); }
   100% { transform: rotate(720deg) scale(1); }
 }
 
 .outro-text {
-  font-size: 85px;
+  font-size: 78px;
   color: var(--accent);
-  text-shadow: 0 0 42px var(--glow);
-  opacity: 0.8;
+  text-shadow: 0 0 40px var(--glow);
+  opacity: .9;
 }
 
-/* Injected by generator */
-.outro-demo-name {
-  font-size: 44px;
-  opacity: .8;
-  color: var(--muted);
-  margin-top: 20px;
-  text-shadow: 0 0 20px rgba(0,255,123,0.25);
-  animation: outroDemoName 1.2s ease-out forwards;
-}
+/* ============================================================
+   Particles canvas
+   ============================================================ */
 
-@keyframes outroDemoName {
-  0%   { opacity: 0; transform: translateY(10px); }
-  100% { opacity: .85; transform: translateY(0); }
-}
-
-/* ============== PARTICLES BACKGROUND ============== */
 #particles {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 0;
 }
