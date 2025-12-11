@@ -57,6 +57,7 @@ html, body {
 .reel {
   width: 1080px;
   height: 1920px;
+  margin:  50px;
 
   position: relative;
   z-index: 10;
@@ -124,7 +125,7 @@ html, body {
 
 .intro-logo,
 .outro-logo {
-  width: 560px;
+  width: 700px;
   filter: drop-shadow(0 0 40px var(--glow));
 }
 
@@ -135,9 +136,8 @@ html, body {
   text-shadow: 0 0 40px var(--glow);
 }
 
-.intro-demo-name,
-.outro-demo-name {
-  font-size: 42px;
+.intro-demo-name {
+  font-size: 82px;
   color: var(--accent);
   opacity: 0.9;
 }
