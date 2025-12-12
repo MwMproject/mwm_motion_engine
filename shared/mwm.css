@@ -1,183 +1,121 @@
-/* ============================================================
-   MwM — GLOBAL CYBER STYLE (FINAL VERSION)
-   ============================================================ */
-
-:root {
-  --bg: #000;
-  --text: #e5e5e5;
-  --accent: #00ff7b;
-  --accent-soft: rgba(0,255,123,0.12);
-  --glow: rgba(0,255,123,0.45);
+:root{
+  --bg:#000;
+  --text:#e5e5e5;
+  --accent:#00ff7b;
+  --accent-soft:rgba(0,255,123,0.12);
+  --glow:rgba(0,255,123,0.45);
 }
 
-/* RESET */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:var(--bg);
+  font-family:Inter,system-ui,Arial,sans-serif;
+  color:var(--text);
 }
 
-/* ============================================================
-   GLOBAL LAYOUT — FULLSCREEN CENTERING
-   ============================================================ */
-
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  background: var(--bg);
-  font-family: "Inter", sans-serif;
-  color: var(--text);
+#particles{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:0;
 }
 
-/* ============================================================
-   PARTICLES LAYER (background only)
-   ============================================================ */
-
-#particles {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0; /* stays behind reel */
-}
-
-/* ============================================================
-   REEL — main container 1080×1920
-   ============================================================ */
-
-.reel {
-  width: 1080px;
-  height: 1920px;
-  margin:  50px;
-
-  position: relative;
-  z-index: 10;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  border-radius: 32px;
-  background: rgba(0,0,0,0.22);
-
+.reel{
+  width:1080px;
+  height:1920px;
+  margin:40px;
+  position:relative;
+  z-index:10;
+  border-radius:32px;
+  background:rgba(0,0,0,0.22);
   box-shadow:
     0 0 60px var(--accent-soft),
     0 0 120px rgba(0,255,123,0.22),
     inset 0 0 40px rgba(0,255,123,0.18);
-
-  overflow: hidden;
+  overflow:hidden;
 }
 
-/* ============================================================
-   SLIDES (intro / demo / outro)
-   ============================================================ */
+/* slide base */
+.slide{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 
-.slide {
-  position: absolute;
-  inset: 0;
-
-  opacity: 0;
-  visibility: hidden;
-  transform: scale(.94);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  opacity:0;
+  visibility:hidden;
+  transform:scale(.985);
 
   transition:
-    opacity 1.2s cubic-bezier(.16,.77,.36,1),
-    visibility 1.2s cubic-bezier(.16,.77,.36,1),
-    transform 1.2s cubic-bezier(.16,.77,.36,1);
+    opacity .9s ease,
+    transform .9s ease,
+    visibility 0s linear .9s; /* visibility change AFTER fade */
 }
 
-.slide.active {
-  opacity: 1;
-  visibility: visible;
-  transform: scale(1);
+.slide.active{
+  opacity:1;
+  visibility:visible;
+  transform:scale(1);
+  transition:
+    opacity .9s ease,
+    transform .9s ease,
+    visibility 0s; /* visible immediately */
 }
 
-.slide.hidden {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  transform: scale(.94);
+/* inner wrapper */
+.slide-inner{
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
-/* ============================================================
-   INTRO & OUTRO (shared styles)
-   ============================================================ */
-
-.intro-wrapper,
-.outro-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 32px;
+/* intro/outro */
+.intro-wrapper,.outro-wrapper{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:32px;
+}
+.intro-logo,.outro-logo{
+  width:700px;
+  filter:drop-shadow(0 0 40px var(--glow));
+}
+.intro-demo-name,.outro-text{
+  font-size:82px;
+  color:var(--accent);
+  text-shadow:0 0 40px var(--glow);
+  opacity:.95;
 }
 
-.intro-logo,
-.outro-logo {
-  width: 700px;
-  filter: drop-shadow(0 0 40px var(--glow));
+/* intro anim */
+.intro-logo{
+  opacity:0;
+  transform:scale(.4) rotate(-180deg);
+  animation:introLogo 2.2s cubic-bezier(.16,.77,.36,1) forwards;
+}
+@keyframes introLogo{
+  0%{opacity:0;transform:scale(.4) rotate(-180deg);}
+  40%{opacity:1;transform:scale(1.1) rotate(0deg);}
+  80%{transform:scale(.96);}
+  100%{opacity:1;transform:scale(1);}
 }
 
-.intro-title,
-.outro-text {
-  font-size: 82px;
-  color: var(--accent);
-  text-shadow: 0 0 40px var(--glow);
-}
-
-.intro-demo-name {
-  font-size: 82px;
-  color: var(--accent);
-  opacity: 0.9;
-}
-
-/* ============================================================
-   ANIMATIONS
-   ============================================================ */
-
-.intro-logo {
-  opacity: 0;
-  transform: scale(0.4) rotate(-180deg);
-  animation: introLogo 2.2s cubic-bezier(.16,.77,.36,1) forwards;
-}
-
-@keyframes introLogo {
-  0%   { opacity: 0; transform: scale(0.4) rotate(-180deg); }
-  40%  { opacity: 1; transform: scale(1.1) rotate(0deg); }
-  80%  { transform: scale(0.96); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.intro-title {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: introTitle 1.2s ease-out forwards;
-  animation-delay: 1.2s;
-}
-
-@keyframes introTitle {
-  0%   { opacity: 0; transform: translateY(20px); }
-  80%  { opacity: 1; transform: translateY(0) scale(1.04); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-.outro-logo {
-  animation: outroSpin 6s ease-in-out infinite;
-}
-
-@keyframes outroSpin {
-  0%   { transform: rotate(0deg) scale(1); }
-  40%  { transform: rotate(360deg) scale(1.08); }
-  100% { transform: rotate(720deg) scale(1); }
+/* outro anim */
+.outro-logo{animation:outroSpin 6s ease-in-out infinite;}
+@keyframes outroSpin{
+  0%{transform:rotate(0deg) scale(1);}
+  40%{transform:rotate(360deg) scale(1.08);}
+  100%{transform:rotate(720deg) scale(1);}
 }

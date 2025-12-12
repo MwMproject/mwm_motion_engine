@@ -1,7 +1,11 @@
 /**
  * ============================================================
- * MwM PROJECT — VIDEO RENDERER (Version A — Stable)
- * Puppeteer → PNG Frames → FFmpeg MP4 (1080×1920)
+ * MwM MOTION ENGINE — VIDEO RENDERER V4 (STABLE)
+ *
+ * - Capture en temps réel (PAS de fake FPS)
+ * - Durée exacte
+ * - Timing identique au navigateur
+ * - Compatible Engine v3+ (window.setSlide)
  * ============================================================
  */
 
@@ -11,117 +15,180 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 // ------------------------------------------------------------
-//  Utilities
+// CONFIG
 // ------------------------------------------------------------
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
 
-function extractDemoName(inputHTML) {
-  if (!inputHTML) return "demo";
+const WIDTH = 1080;
+const HEIGHT = 1920;
 
-  // Always resolve to absolute path
-  const normalized = path.resolve(inputHTML);
+const FPS = 60;
 
-  const folderName = path.basename(path.dirname(normalized));
-  if (!folderName) return "demo";
+const INTRO_SECONDS = 3;
+const DEMO_SECONDS = 24;
+const OUTRO_SECONDS = 3;
 
-  // Clean demo name
-  return folderName.replace(/[^a-z0-9\-]/gi, "") || "demo";
-}
+const TOTAL_SECONDS = INTRO_SECONDS + DEMO_SECONDS + OUTRO_SECONDS;
 
 // ------------------------------------------------------------
-//  Main renderer function
-// ------------------------------------------------------------
+
 async function renderVideo(inputHTML, outputName = null) {
   console.log("\n──────────────────────────────────────────");
-  console.log("🎬 MwM VIDEO RENDERER — Stable Version A");
+  console.log("🎬 MwM VIDEO RENDERER v4");
   console.log("──────────────────────────────────────────\n");
 
   if (!fs.existsSync(inputHTML)) {
-    console.error("❌ Input HTML not found:", inputHTML);
+    console.error("❌ HTML not found:", inputHTML);
     process.exit(1);
   }
 
-  // Main parameters
-  const FPS = 60;
-  const DURATION = 26; // seconds (intro + demo + outro)
-  const TOTAL_FRAMES = FPS * DURATION;
+  const rendererDir = __dirname;
+  const framesDir = path.join(rendererDir, "frames_temp");
+  const videosDir = path.join(rendererDir, "videos");
 
-  console.log(`🎞  Total frames: ${TOTAL_FRAMES}\n`);
+  if (!fs.existsSync(framesDir)) fs.mkdirSync(framesDir);
+  if (!fs.existsSync(videosDir)) fs.mkdirSync(videosDir);
 
-  // Prepare directories
-  const RENDER_DIR = __dirname;
-  const FRAMES_DIR = path.join(RENDER_DIR, "frames_temp");
-  const VIDEOS_DIR = path.join(RENDER_DIR, "videos");
+  // Nom automatique
+  const baseName = outputName || path.basename(path.dirname(inputHTML));
 
-  ensureDir(FRAMES_DIR);
-  ensureDir(VIDEOS_DIR);
-
-  // Auto name if not provided
-  const demoName = extractDemoName(inputHTML);
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const fileName = outputName || `${demoName}_${timestamp}.mp4`;
 
-  const outputMP4 = path.join(VIDEOS_DIR, fileName);
+  const outputMP4 = path.join(videosDir, `${baseName}_${timestamp}.mp4`);
 
-  // ------------------------------------------------------------
-  // Puppeteer capture
-  // ------------------------------------------------------------
+  console.log("📄 HTML :", inputHTML);
+  console.log("🎞  OUTPUT :", outputMP4);
+  console.log(
+    `⏱  DURATION : ${TOTAL_SECONDS}s (${INTRO_SECONDS}s + ${DEMO_SECONDS}s + ${OUTRO_SECONDS}s)`
+  );
+  console.log(`🎥 FPS : ${FPS}\n`);
+
+  // ----------------------------------------------------------
+  // Launch browser
+  // ----------------------------------------------------------
+
   const browser = await puppeteer.launch({
     headless: true,
-    defaultViewport: { width: 1080, height: 1920 },
+    defaultViewport: {
+      width: WIDTH,
+      height: HEIGHT,
+    },
+    args: ["--disable-gpu"],
   });
 
   const page = await browser.newPage();
-  await page.goto("file://" + path.resolve(inputHTML));
 
-  console.log("📸 Capturing frames…");
+  // 🔑 Flag rendering mode
+  await page.evaluateOnNewDocument(() => {
+    window.__MWM_RENDERING__ = true;
+  });
 
-  for (let i = 0; i < TOTAL_FRAMES; i++) {
-    const num = String(i).padStart(5, "0");
-    const img = path.join(FRAMES_DIR, `frame_${num}.png`);
+  await page.goto("file://" + path.resolve(inputHTML), {
+    waitUntil: "load",
+  });
 
-    await page.screenshot({ path: img, type: "png" });
+  // ----------------------------------------------------------
+  // SLIDE TIMELINE (renderer-controlled)
+  // ----------------------------------------------------------
 
-    // Keep timing stable
-    await new Promise((res) => setTimeout(res, 1000 / FPS));
+  const timeline = [
+    { id: "intro", duration: INTRO_SECONDS },
+    {
+      id: page.evaluate(
+        () => document.querySelector(".slide:not(#intro):not(#outro)")?.id
+      ),
+      duration: DEMO_SECONDS,
+    },
+    { id: "outro", duration: OUTRO_SECONDS },
+  ];
 
-    process.stdout.write(`  Frame ${i + 1}/${TOTAL_FRAMES}\r`);
+  // Resolve demo slide ID
+  const demoId = await page.evaluate(() => {
+    const slides = [...document.querySelectorAll(".slide")];
+    return slides.find((s) => s.id !== "intro" && s.id !== "outro")?.id;
+  });
+
+  timeline[1].id = demoId;
+
+  console.log("🧭 SLIDES :", timeline.map((s) => s.id).join(" → "), "\n");
+
+  // ----------------------------------------------------------
+  // CAPTURE LOOP (REAL TIME)
+  // ----------------------------------------------------------
+
+  let frameIndex = 0;
+
+  async function capture(seconds) {
+    const totalFrames = Math.floor(seconds * FPS);
+    const start = Date.now();
+
+    for (let i = 0; i < totalFrames; i++) {
+      const file = path.join(
+        framesDir,
+        `frame_${String(frameIndex).padStart(5, "0")}.png`
+      );
+
+      await page.screenshot({ path: file });
+      frameIndex++;
+
+      // ⏱ Real-time pacing
+      const elapsed = Date.now() - start;
+      const target = (i + 1) * (1000 / FPS);
+      const delay = Math.max(0, target - elapsed);
+
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  // ----------------------------------------------------------
+  // RUN TIMELINE
+  // ----------------------------------------------------------
+
+  for (const step of timeline) {
+    console.log("▶ Slide:", step.id);
+
+    await page.evaluate((id) => {
+      window.setSlide(id);
+    }, step.id);
+
+    await capture(step.duration);
   }
 
   await browser.close();
-  console.log("\n✓ Frames OK — Encoding with FFmpeg…\n");
 
-  // ------------------------------------------------------------
-  // VIDEO ENCODING
-  // ------------------------------------------------------------
-  const ffmpegCmd = `"ffmpeg" -y -framerate ${FPS} -i "frames_temp/frame_%05d.png" -vf "format=yuv420p" "${fileName}"`;
+  console.log("\n📦 Frames captured. Encoding video...\n");
 
-  try {
-    execSync(ffmpegCmd, {
-      stdio: "inherit",
-      cwd: VIDEOS_DIR, // saves video inside /videos
-    });
-  } catch (err) {
-    console.error("❌ FFmpeg error:", err);
-  }
+  // ----------------------------------------------------------
+  // FFMPEG
+  // ----------------------------------------------------------
 
-  // ------------------------------------------------------------
+  const ffmpegCmd = `
+ffmpeg -y
+-framerate ${FPS}
+-i "${framesDir}/frame_%05d.png"
+-vf "format=yuv420p"
+-c:v libx264
+-pix_fmt yuv420p
+"${outputMP4}"
+`.replace(/\n/g, " ");
+
+  execSync(ffmpegCmd, { stdio: "inherit" });
+
   // Cleanup
-  // ------------------------------------------------------------
-  fs.rmSync(FRAMES_DIR, { recursive: true, force: true });
-  console.log("\n🧹 Temp frames deleted.");
+  fs.rmSync(framesDir, { recursive: true, force: true });
 
-  console.log(`\n🎉 VIDEO READY → ${outputMP4}\n`);
+  console.log("\n🎉 VIDEO READY");
+  console.log("📍", outputMP4);
 }
 
 // ------------------------------------------------------------
-//  CLI
+// CLI
 // ------------------------------------------------------------
-const inputHTML = process.argv[2];
-const outputName = process.argv[3] || null;
 
-renderVideo(inputHTML, outputName);
+const inputHTML = process.argv[2];
+
+if (!inputHTML) {
+  console.log("❌ Usage: node render-video.js <index.html>");
+  process.exit(1);
+}
+
+renderVideo(inputHTML);

@@ -1,192 +1,144 @@
-/**
- * ============================================================
- * MwM PROJECT — DEMO GENERATOR
- * Generates: intro → demo → outro + full HTML wrapper
- * ============================================================
- */
-
 const fs = require("fs");
 const path = require("path");
 
-/* ------------------------------------------------------------
-   HELPERS
------------------------------------------------------------- */
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
-
 function copyFile(src, dest) {
   ensureDir(path.dirname(dest));
   fs.copyFileSync(src, dest);
 }
-
 function copyFolder(src, dest) {
   ensureDir(dest);
-  for (const item of fs.readdirSync(src)) {
+  fs.readdirSync(src).forEach((item) => {
     const s = path.join(src, item);
     const d = path.join(dest, item);
-    if (fs.statSync(s).isDirectory()) copyFolder(s, d);
-    else copyFile(s, d);
-  }
+    fs.statSync(s).isDirectory() ? copyFolder(s, d) : copyFile(s, d);
+  });
 }
 
-/* ------------------------------------------------------------
-   INPUTS
------------------------------------------------------------- */
 const demoName = process.argv[2];
 const pageTitle = process.argv[3] || "MwM Demo";
-
 if (!demoName) {
-  console.log('❌ Usage: node generator/create-demo.js <templateName> "Title"');
+  console.log(
+    'Usage: node generator/create-demo.js <templateName> "Page Title"'
+  );
   process.exit(1);
 }
 
 const safeDemoName = demoName.toLowerCase().replace(/\s+/g, "-");
-const outputDir = path.join("output", safeDemoName);
-
-/* ------------------------------------------------------------
-   TEMPLATE PATHS
------------------------------------------------------------- */
+const outDir = path.join("output", safeDemoName);
 const TEMPLATE_DIR = path.join("templates", safeDemoName);
 const BASE_DIR = path.join("templates", "base");
 
 if (!fs.existsSync(TEMPLATE_DIR)) {
-  console.log(`❌ Template not found: ${TEMPLATE_DIR}`);
+  console.log("Template not found:", TEMPLATE_DIR);
   process.exit(1);
 }
-
-["demo.html", "demo.css", "demo.js"].forEach((file) => {
-  if (!fs.existsSync(path.join(TEMPLATE_DIR, file))) {
-    console.log(`❌ Missing required template file: ${file}`);
+["demo.html", "demo.css", "demo.js"].forEach((f) => {
+  if (!fs.existsSync(path.join(TEMPLATE_DIR, f))) {
+    console.log("Missing file:", f);
     process.exit(1);
   }
 });
 
-/* ------------------------------------------------------------
-   CLEAN OLD VERSION
------------------------------------------------------------- */
-if (fs.existsSync(outputDir)) {
-  console.log("🧹 Removing previous version…");
-  fs.rmSync(outputDir, { recursive: true, force: true });
-}
-ensureDir(outputDir);
+// clean output
+fs.rmSync(outDir, { recursive: true, force: true });
+ensureDir(outDir);
 
-/* ------------------------------------------------------------
-   LOAD TEMPLATE CONTENT
------------------------------------------------------------- */
+// load base
 let introHTML = fs.readFileSync(path.join(BASE_DIR, "intro.html"), "utf8");
-let outroHTML = fs.readFileSync(path.join(BASE_DIR, "outro.html"), "utf8");
+const outroHTML = fs.readFileSync(path.join(BASE_DIR, "outro.html"), "utf8");
 const demoHTML = fs.readFileSync(path.join(TEMPLATE_DIR, "demo.html"), "utf8");
 
-/* Inject dynamic titles */
+// inject title in intro (only)
 introHTML = introHTML.replace(
   "</div>",
   `  <h2 class="intro-demo-name">${pageTitle}</h2>\n</div>`
 );
 
-/* ------------------------------------------------------------
-   COPY SHARED ASSETS
------------------------------------------------------------- */
-copyFile("shared/mwm.css", path.join(outputDir, "mwm.css"));
-copyFile("shared/mwm_particules.js", path.join(outputDir, "mwm_particules.js"));
-copyFile("shared/logo_mwm.png", path.join(outputDir, "logo_mwm.png"));
+// copy assets
+copyFolder("shared", outDir);
+copyFolder(TEMPLATE_DIR, outDir);
 
-/* ------------------------------------------------------------
-   COPY TEMPLATE FILES (CSS + JS)
------------------------------------------------------------- */
-copyFile(path.join(TEMPLATE_DIR, "demo.css"), path.join(outputDir, "demo.css"));
-
-copyFile(path.join(TEMPLATE_DIR, "demo.js"), path.join(outputDir, "demo.js"));
-
-/* ------------------------------------------------------------
-   GENERATE FINAL INDEX.HTML
------------------------------------------------------------- */
 const finalHTML = `
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1080, initial-scale=1.0">
   <title>${pageTitle}</title>
-
   <link rel="stylesheet" href="./mwm.css">
   <link rel="stylesheet" href="./demo.css">
 </head>
-
 <body>
 
-  <canvas id="particles"></canvas>
+<canvas id="particles"></canvas>
 
-  <div class="reel">
+<div class="reel">
 
-    <!-- INTRO -->
-    <section class="slide active" id="intro">
-      <div class="slide-inner">
-${introHTML}
-      </div>
-    </section>
+  <section class="slide active" id="intro">
+    <div class="slide-inner">
+      ${introHTML}
+    </div>
+  </section>
 
-    <!-- DEMO -->
-    <section class="slide" id="${safeDemoName}-demo">
-${demoHTML}
-    </section>
+  <section class="slide" id="demo">
+    <div class="slide-inner">
+      ${demoHTML}
+    </div>
+  </section>
 
-    <!-- OUTRO -->
-    <section class="slide" id="outro">
-      <div class="slide-inner">
-${outroHTML}
-      </div>
-    </section>
+  <section class="slide" id="outro">
+    <div class="slide-inner">
+      ${outroHTML}
+    </div>
+  </section>
 
-  </div>
+</div>
 
-  <script src="./mwm_particules.js"></script>
-  <script src="./demo.js"></script>
+<script src="./mwm_particules.js"></script>
+<script src="./demo.js"></script>
 
-  <!-- DEMO ENGINE V2 -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const slides = ["intro", "${safeDemoName}-demo", "outro"];
-      const timings = [3000, 20000, 3000];
-      let current = 0;
+<script>
+(function(){
+  const INTRO_MS = 3000;
+  const DEMO_MS  = 24000;
+  const OUTRO_MS = 3000;
 
-      function showSlide(i) {
-        document.querySelectorAll(".slide").forEach(s => {
-          s.classList.remove("active");
-          s.classList.add("hidden");
-        });
+  let demoStarted = false;
 
-        const id = slides[i];
-        const el = document.getElementById(id);
+  function setSlide(id){
+    document.querySelectorAll(".slide").forEach(s=>s.classList.remove("active"));
+    const el = document.getElementById(id);
+    if(el) el.classList.add("active");
 
-        el.classList.remove("hidden");
-        el.classList.add("active");
+    if(id==="demo" && !demoStarted && typeof window.startDemo==="function"){
+      demoStarted = true;
+      window.startDemo();
+    }
+  }
 
-        if (id === "${safeDemoName}-demo" && typeof startDemo === "function") {
-          startDemo();
-        }
-      }
+  window.setSlide = setSlide;
 
-      showSlide(0);
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const isRendering = window.__MWM_RENDERING__ === true;
+    if(isRendering){
+      setSlide("intro");
+      return;
+    }
 
-      function next() {
-        current++;
-        if (current >= slides.length) return;
-        showSlide(current);
-        setTimeout(next, timings[current]);
-      }
-
-      setTimeout(next, timings[0]);
-    });
-  </script>
+    // autoplay preview
+    setSlide("intro");
+    setTimeout(()=>setSlide("demo"), INTRO_MS);
+    setTimeout(()=>setSlide("outro"), INTRO_MS + DEMO_MS);
+  });
+})();
+</script>
 
 </body>
 </html>
 `;
 
-fs.writeFileSync(path.join(outputDir, "index.html"), finalHTML, "utf8");
-
-console.log("✔ Demo generated:", outputDir);
-console.log("✔ Injected titles:", pageTitle);
-console.log("✨ Ready to render!");
+fs.writeFileSync(path.join(outDir, "index.html"), finalHTML.trim(), "utf8");
+console.log("✔ Demo generated:", outDir);
